@@ -1,0 +1,20 @@
+[project]
+name = "pengolodh"
+version = "0.1.0"
+description = "A text preparation pipeline"
+readme = "README.md"
+authors = [
+    { name = "James Tauber", email = "jtauber@jtauber.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "lxml>=5.4.0",
+    "typer>=0.16.0",
+]
+
+[project.scripts]
+pengolodh = "pengolodh:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -10,4 +10,4 @@ Initially focused on extracting text from EPUBs for citation and stand-off annot
 - activate venv
 - `pengolodh volume <path-to-unzipped-epub>`
 
-Will either print the title of the volume or, if the assertions are two strict, throw an exception.
+Will either print the title of the volume or, if the assertions are too strict, throw an exception.

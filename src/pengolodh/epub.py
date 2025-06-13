@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from lxml import etree
+from lxml import etree  # type: ignore[import-untyped]
 
 
 def opf(element_name: str) -> str:

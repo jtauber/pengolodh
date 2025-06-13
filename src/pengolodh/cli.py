@@ -2,7 +2,7 @@ from json import dumps
 from pathlib import Path
 from typing import Optional
 
-import typer
+import typer  # type: ignore
 
 from .epub import process_volume
 from .extract import extract_fragment2, extract_fragment3

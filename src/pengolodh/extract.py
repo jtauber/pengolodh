@@ -1,6 +1,17 @@
 from pathlib import Path
+from typing import TypedDict
 
-from lxml import etree
+from lxml import etree  # type: ignore[import-untyped]
+
+
+type NodeTuple = tuple[str, int, int, list[NodeTuple]]
+
+
+class NodeDict(TypedDict):
+    label: str
+    offset: int
+    length: int
+    child_count: int
 
 
 def make_label(el: etree._Element) -> str:
@@ -46,7 +57,7 @@ def extract_fragment(filename: Path, ref: str | None = None, debug=False) -> tup
     return element, offset, full_content
 
 
-def extract_fragment2(filename: Path, address: str | None = None) -> dict:
+def extract_fragment2(filename: Path, address: str | None = None) -> NodeDict:
     element, offset, _ = extract_fragment(filename, address)
     element_text = etree.tostring(element, method="text", encoding="unicode", with_tail=False)
 
@@ -58,13 +69,13 @@ def extract_fragment2(filename: Path, address: str | None = None) -> dict:
     }
 
 
-def extract_fragment3(filename: Path, address: str | None = None) -> dict:
+def extract_fragment3(filename: Path, address: str | None = None) -> NodeTuple:
     element, offset, _ = extract_fragment(filename, address)
 
     return recursive_extract(element, offset)[1]
 
 
-def recursive_extract(element: etree._Element, offset: int) -> dict:
+def recursive_extract(element: etree._Element, offset: int) -> tuple[str, NodeTuple]:
     element_text = etree.tostring(element, method="text", encoding="unicode", with_tail=False)
 
     children = []

@@ -4,6 +4,9 @@ import sys
 from typing import Optional
 
 from rich import print as rich_print
+from rich.console import Console
+from rich.table import Table
+
 import typer  # type: ignore
 
 from .config import books_configuration
@@ -18,6 +21,10 @@ def print_info(message: str) -> None:
     rich_print(f"[blue]{message}[/blue]", file=sys.stderr)
 
 
+def print_error(message: str) -> None:
+    rich_print(f"[red]{message}[/red]", file=sys.stderr)
+
+
 def get_path(book_id_or_path: str) -> Path:
     books = books_configuration()
     if book_id_or_path in books:
@@ -26,6 +33,23 @@ def get_path(book_id_or_path: str) -> Path:
     else:
         path_string = book_id_or_path
     return Path(path_string)
+
+
+@app.command()
+def list_books() -> None:
+    books = books_configuration()
+    if not books:
+        print_error("No books found.")
+    else:
+        table = Table(title="Books")
+        table.add_column("Book ID", style="cyan")
+        table.add_column("Path", style="magenta")
+
+        for book_id, path in books.items():
+            table.add_row(book_id, str(Path(path).resolve()))
+
+        console = Console()
+        console.print(table)
 
 
 @app.command()

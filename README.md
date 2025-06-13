@@ -64,11 +64,11 @@ $ pengolodh extract-map <book-id-or-path> --itemref chapter01 --address 1.3.2 --
 
 ## What is a `book-id-or-path`?
 
-This can either be the full path to an unzipped EPUB or a book identifier set in `$XDG_CONFIG/pengolodh.toml` as follows:
+This can either be the full path to an EPUB file, an unzipped EPUB, or a book identifier set in `$XDG_CONFIG/pengolodh.toml` as follows:
 
 ```
 [books]
-<book-id> = "<path-to-unzipped-epub>"
+<book-id> = "<path-to-epub>"
 ...
 ```
 

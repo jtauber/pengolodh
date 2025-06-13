@@ -59,7 +59,10 @@ def process_opf(path: Path) -> dict:
     assert path.is_file()
     package = etree.parse(path).getroot()
     assert package.tag == opf("package")
-    assert set(package.keys()) == {"version", "unique-identifier", xml("lang")}
+    assert set(package.keys()) in [
+        {"version", "unique-identifier"},
+        {"version", "unique-identifier", xml("lang")},
+    ]
     version = package.attrib["version"]
     assert version in ["2.0", "3.0"]
     unique_identifier = package.attrib["unique-identifier"]

@@ -9,7 +9,9 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "lxml>=5.4.0",
+    "rich>=14.0.0",
     "typer>=0.16.0",
+    "xdg-base-dirs>=6.0.2",
 ]
 
 [project.scripts]

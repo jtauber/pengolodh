@@ -1,9 +1,12 @@
 from json import dumps
 from pathlib import Path
+import sys
 from typing import Optional
 
+from rich import print as rich_print
 import typer  # type: ignore
 
+from .config import books_configuration
 from .epub import process_volume
 from .extract import extract_node, extract_text
 
@@ -11,16 +14,30 @@ from .extract import extract_node, extract_text
 app = typer.Typer()
 
 
+def print_info(message: str) -> None:
+    rich_print(f"[blue]{message}[/blue]", file=sys.stderr)
+
+
+def get_path(book_id_or_path: str) -> Path:
+    books = books_configuration()
+    if book_id_or_path in books:
+        path_string = books[book_id_or_path]
+        print_info(f"using {path_string}")
+    else:
+        path_string = book_id_or_path
+    return Path(path_string)
+
+
 @app.command()
 def volume(path_string: str):
-    path = Path(path_string)
+    path = get_path(path_string)
     volume_data = process_volume(path)
     print(volume_data["ncx"]["title"])
 
 
 @app.command()
 def spine(path_string: str):
-    path = Path(path_string)
+    path = get_path(path_string)
     volume_data = process_volume(path)
     manifest = volume_data["manifest"]
     for itemref in volume_data["spine"]["itemrefs"]:
@@ -29,8 +46,8 @@ def spine(path_string: str):
 
 @app.command()
 def extract_map(volume_path: str, itemref: Optional[str] = None, address: Optional[str] = None, recurse: bool = False) -> None:
-
-    volume_data = process_volume(Path(volume_path))
+    path = get_path(volume_path)
+    volume_data = process_volume(path)
     manifest = volume_data["manifest"]
 
     if itemref is None:
@@ -48,8 +65,8 @@ def extract_map(volume_path: str, itemref: Optional[str] = None, address: Option
 
 @app.command()
 def text(volume_path: str, itemref: str, address: Optional[str] = None) -> None:
-
-    volume_data = process_volume(Path(volume_path))
+    path = get_path(volume_path)
+    volume_data = process_volume(path)
     manifest = volume_data["manifest"]
     file_path = manifest[itemref]["path"]
 

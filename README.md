@@ -21,10 +21,18 @@ will either print the "spine" of the volume, or, if the assertions are too stric
 
 - `pengolodh extract-map <path-to-unzipped-epub> <item-ref>`
 
-(where `item-ref` comes from the first column of the output of `spine`) will give information about the root node of the given item.
+will give information about the root node of the given item.
 
 - `pengolodh extract-map <path-to-unzipped-epub> <item-ref> --address <address>`
 
 will do the above but for the node with the given `address` rather than the root node.
 
 Note that the name `extract-map` is historical and will likely change.
+
+## What is an `item-ref`?
+
+An `item-ref` is an identifier for a particular HTML file in the EPUB given by the first column of the output of the `spine` command.
+
+## What is an `address`?
+
+An `address` is a dot-separated path to a particular element in an HTML file. `5.1.3` would mean the third child or the first child of the fifth child of the root.

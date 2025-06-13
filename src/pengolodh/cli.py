@@ -53,15 +53,15 @@ def list_books() -> None:
 
 
 @app.command()
-def volume(path_string: str):
-    path = get_path(path_string)
+def volume(book_id_or_path: str):
+    path = get_path(book_id_or_path)
     volume_data = process_volume(path)
     print(volume_data["ncx"]["title"])
 
 
 @app.command()
-def spine(path_string: str):
-    path = get_path(path_string)
+def spine(book_id_or_path: str):
+    path = get_path(book_id_or_path)
     volume_data = process_volume(path)
     manifest = volume_data["manifest"]
     for itemref in volume_data["spine"]["itemrefs"]:
@@ -69,15 +69,13 @@ def spine(path_string: str):
 
 
 @app.command()
-def extract_map(volume_path: str, itemref: Optional[str] = None, address: Optional[str] = None, recurse: bool = False) -> None:
-    path = get_path(volume_path)
+def extract_map(book_id_or_path: str, itemref: Optional[str] = None, address: Optional[str] = None, recurse: bool = False) -> None:
+    path = get_path(book_id_or_path)
     volume_data = process_volume(path)
     manifest = volume_data["manifest"]
 
     if itemref is None:
         items = []
-        volume_data = process_volume(Path(volume_path))
-        manifest = volume_data["manifest"]
         for item_ref in volume_data["spine"]["itemrefs"]:
             file_path = manifest[item_ref]["path"]
             items.append([item_ref, extract_node(file_path, address=None, recurse=recurse, dictionary=not recurse)])
@@ -88,8 +86,8 @@ def extract_map(volume_path: str, itemref: Optional[str] = None, address: Option
 
 
 @app.command()
-def text(volume_path: str, itemref: str, address: Optional[str] = None) -> None:
-    path = get_path(volume_path)
+def text(book_id_or_path: str, itemref: str, address: Optional[str] = None) -> None:
+    path = get_path(book_id_or_path)
     volume_data = process_volume(path)
     manifest = volume_data["manifest"]
     file_path = manifest[itemref]["path"]

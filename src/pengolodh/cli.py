@@ -77,8 +77,16 @@ def spine(book_id_or_path: str):
     path = get_path(book_id_or_path)
     volume_data = process_volume(path)
     manifest = volume_data["manifest"]
+
+    table = Table(title="Spine")
+    table.add_column("Item Ref", style="cyan")
+    table.add_column("Path", style="magenta")
+
     for itemref in volume_data["spine"]["itemrefs"]:
-        print(itemref, manifest[itemref]["path"])
+        table.add_row(itemref, str(manifest[itemref]["path"]))
+
+    console = Console()
+    console.print(table)
 
 
 @app.command()

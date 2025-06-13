@@ -4,14 +4,17 @@ from typing import TypedDict
 from lxml import etree  # type: ignore[import-untyped]
 
 
-type NodeTuple = tuple[str, int, int, list[NodeTuple]]
+# (address, label, offset, total_length, text_length, children, tail_length)
+type NodeTuple = tuple[str, str, int, int, int, list[NodeTuple], int]
 
 
 class NodeDict(TypedDict):
     label: str
     offset: int
-    length: int
+    total_length: int
+    text_length: int
     child_count: int
+    tail_length: int
 
 
 def make_label(el: etree._Element) -> str:
@@ -58,10 +61,10 @@ def extract_node(path: Path, address: str | None, recurse: bool, dictionary: boo
         # note: recurse is ignored for dictionary output
         return extract_dict(element, offset)[1]
     else:
-        return extract_tuple(element, offset, recurse)[1]
+        return extract_tuple(element, offset, recurse, address)[1]
 
 
-def extract_tuple(element: etree._Element, offset: int, recurse: bool) -> tuple[str, NodeTuple]:
+def extract_tuple(element: etree._Element, offset: int, recurse: bool, address: str | None) -> tuple[str, NodeTuple]:
     element_text = get_text(element)
 
     children = []
@@ -72,11 +75,19 @@ def extract_tuple(element: etree._Element, offset: int, recurse: bool) -> tuple[
             # skip comments
             if isinstance(child, etree._Comment):
                 continue
-            child_text, child_data = extract_tuple(child, child_offset, recurse)
+            child_text, child_data = extract_tuple(child, child_offset, recurse, (address + "." if address else "") + str(len(children) + 1))
             children.append(child_data)
             child_offset += len(child_text) + len(child.tail or "")
 
-    node_tuple = (make_label(element), offset, len(element_text), children)
+    node_tuple = (
+        address or "",
+        make_label(element),
+        offset,
+        len(element_text),
+        0 if element.text is None else len(element.text),
+        children,
+        0 if element.tail is None else len(element.tail)
+    )
 
     return (element_text, node_tuple)
 
@@ -87,8 +98,10 @@ def extract_dict(element: etree._Element, offset: int) -> tuple[str, NodeDict]:
     node_dict = NodeDict({
         "label": make_label(element),
         "offset": offset,
-        "length": len(element_text),
+        "total_length": len(element_text),
+        "text_length": 0 if element.text is None else len(element.text),
         "child_count": len(element),
+        "tail_length": 0 if element.tail is None else len(element.tail),
     })
 
     return (element_text, node_dict)

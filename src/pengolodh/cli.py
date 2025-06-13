@@ -7,6 +7,7 @@ import zipfile
 from rich import print as rich_print  # type: ignore[import-not-found]
 from rich.console import Console  # type: ignore[import-not-found]
 from rich.table import Table  # type: ignore[import-not-found]
+from rich.tree import Tree  # type: ignore[import-not-found]
 
 import typer  # type: ignore
 
@@ -104,6 +105,54 @@ def extract_map(book_id_or_path: str, itemref: Optional[str] = None, address: Op
     else:
         file_path = manifest[itemref]["path"]
         print(extract_node(file_path, address, recurse=recurse, dictionary=not recurse))
+
+
+def build_tree(node, data, depth: Optional[int] = None):
+    address, label, offset, total_length, text_length, children, tail_length = data
+
+    if "#" in label:
+        a, d = label.split("#")
+    else:
+        a, d = label, ""
+    if "." in a:
+        b, c = a.split(".")
+    else:
+        b, c = a, ""
+    styled_label = f"[bold]{address}[/bold] " if address else ""
+    styled_label += f"[green]{b}[/green]"
+    if c:
+        styled_label += f".[cyan]{c}[/cyan]"
+    if d:
+        styled_label += f"[dim]#{d}[/dim]"
+
+    styled_label += f" [magenta][{offset}:{offset+total_length}][/magenta]"
+
+    child_node = node.add(styled_label, style="not bold")
+
+    if text_length:
+        child_node.add(f"[yellow]{text_length}[/yellow]")
+
+    if depth is None or depth > 0:
+        for child in children:
+            build_tree(child_node, child, None if depth is None else depth - 1)
+
+    if tail_length:
+        node.add(f"[yellow]{tail_length}[/yellow]")
+
+
+@app.command()
+def tree(book_id_or_path: str, itemref: str, address: Optional[str] = None, depth: Optional[int] = None) -> None:
+    path = get_path(book_id_or_path)
+    volume_data = process_volume(path)
+    manifest = volume_data["manifest"]
+
+    file_path = manifest[itemref]["path"]
+    tree = Tree(itemref, style="bold")
+    node = extract_node(file_path, address, recurse=True, dictionary=False)
+    build_tree(tree, node, depth)
+
+    console = Console()
+    console.print(tree)
 
 
 @app.command()

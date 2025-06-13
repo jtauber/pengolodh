@@ -41,6 +41,10 @@ will extract the plain text of the given item (or the specific address, if given
 
 will extract the XML of the given item (or the specific address, if given)
 
+- `pengolodh tree <book-id-or-path> <item-ref> [--address <address>] [--depth <depth>]`
+
+will show the tree structure of the given item (or the specific address, if given) optionally up to the given depth.
+
 - `pengolodh list-books`
 
 will list any books configured with ids (see under What is a `book-id-or-path`?)

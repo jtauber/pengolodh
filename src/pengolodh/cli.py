@@ -5,7 +5,7 @@ from typing import Optional
 import typer  # type: ignore
 
 from .epub import process_volume
-from .extract import extract_fragment2, extract_fragment3
+from .extract import extract_node
 
 
 app = typer.Typer()
@@ -34,7 +34,7 @@ def extract_map(volume_path: str, itemref: str, address: Optional[str] = None) -
     manifest = volume_data["manifest"]
     file_path = manifest[itemref]["path"]
 
-    print(extract_fragment2(file_path, address))
+    print(extract_node(file_path, address, recurse=False, dictionary=True))
 
 
 @app.command()
@@ -44,7 +44,7 @@ def extract_map2(volume_path: str, itemref: str, address: Optional[str] = None) 
     manifest = volume_data["manifest"]
     file_path = manifest[itemref]["path"]
 
-    print(dumps(extract_fragment3(file_path, address)))
+    print(dumps(extract_node(file_path, address, recurse=True, dictionary=False)))
 
 
 @app.command()
@@ -55,6 +55,6 @@ def extract_map3(volume_path: str) -> None:
     manifest = volume_data["manifest"]
     for itemref in volume_data["spine"]["itemrefs"]:
         file_path = manifest[itemref]["path"]
-        items.append([itemref, extract_fragment3(file_path)])
+        items.append([itemref, extract_node(file_path, address=None, recurse=True, dictionary=False)])
     
     print(dumps(items, indent=2))

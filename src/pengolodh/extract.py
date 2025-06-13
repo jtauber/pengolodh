@@ -71,6 +71,9 @@ def recursive_extract(element: etree._Element, offset: int) -> dict:
 
     child_offset = offset + len(element.text or "")
     for child in element:
+        # skip comments
+        if isinstance(child, etree._Comment):
+            continue
         child_text, child_data = recursive_extract(child, child_offset)
         children.append(child_data)
         child_offset += len(child_text) + len(child.tail or "")

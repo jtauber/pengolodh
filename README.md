@@ -37,6 +37,10 @@ Note that the name `extract-map` is historical and will likely change.
 
 will extract the plain text of the given item (or the specific address, if given)
 
+- `pengolodh xml <book-id-or-path> <item-ref> [--address <address>]`
+
+will extract the XML of the given item (or the specific address, if given)
+
 - `pengolodh list-books`
 
 will list any books configured with ids (see under What is a `book-id-or-path`?)

@@ -99,3 +99,10 @@ def extract_text(filename: Path, address: str | None = None) -> str:
     element, _ = element_and_offset(filename, address)
 
     return get_text(element)
+
+
+def extract_xml(filename: Path, address: str | None = None) -> str:
+
+    element, _ = element_and_offset(filename, address)
+
+    return etree.tostring(element, method="xml", encoding="unicode", with_tail=False)

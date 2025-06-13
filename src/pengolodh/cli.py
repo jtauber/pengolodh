@@ -12,7 +12,7 @@ import typer  # type: ignore
 
 from .config import books_configuration
 from .epub import process_volume
-from .extract import extract_node, extract_text
+from .extract import extract_node, extract_text, extract_xml
 
 
 app = typer.Typer()
@@ -114,3 +114,13 @@ def text(book_id_or_path: str, itemref: str, address: Optional[str] = None) -> N
     file_path = manifest[itemref]["path"]
 
     print(extract_text(file_path, address))
+
+
+@app.command()
+def xml(book_id_or_path: str, itemref: str, address: Optional[str] = None) -> None:
+    path = get_path(book_id_or_path)
+    volume_data = process_volume(path)
+    manifest = volume_data["manifest"]
+    file_path = manifest[itemref]["path"]
+
+    print(extract_xml(file_path, address))

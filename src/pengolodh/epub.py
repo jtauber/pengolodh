@@ -70,7 +70,7 @@ def process_opf(parent: Path | zipfile.Path, rootfile: str) -> dict:
     version = package.attrib["version"]
     assert version in ["2.0", "3.0"]
     unique_identifier = package.attrib["unique-identifier"]
-    assert unique_identifier in ["PrimaryID", "bookid"]
+    assert unique_identifier in ["PrimaryID", "bookid", "uuid_id"], unique_identifier
     assert len(package) == 4
 
     for child in package:
@@ -109,12 +109,17 @@ def process_metadata(metadata_element: etree._Element) -> dict:
             assert len(child) == 0
             metadata["title"] = child.text
         elif child.tag == dc("creator"):
-            # could have idpf:role or idpf:file-as attributes
-            # assert child.attrib == {}
+            assert set(child.keys()) in [
+                {opf("role"), opf("file-as")},
+                {},
+            ], child.attrib
             assert len(child) == 0
             # print(child.text)  # @@@
         elif child.tag == dc("contributor"):
-            assert child.attrib == {}
+            assert set(child.keys()) in [
+                {opf("role")},
+                {},
+            ], child.attrib
             assert len(child) == 0
             # print(child.text)  # @@@
         elif child.tag == dc("publisher"):
@@ -146,7 +151,11 @@ def process_metadata(metadata_element: etree._Element) -> dict:
             assert len(child) == 0
             assert child.text in ["en", "en-US"]
         elif child.tag == dc("identifier"):
-            assert set(child.keys()) == {"id"}
+            assert set(child.keys()) in [
+                {"id"},
+                {opf("scheme")},
+                {"id", opf("scheme")},
+            ], child.attrib
             # print(child.text)
         elif child.tag == dc("type"):
             assert child.attrib == {}
@@ -195,10 +204,12 @@ def process_manifest(parent_path: Path | zipfile.Path, manifest_element: etree._
             "application/vnd.adobe-page-template+xml",  # @@@
             "application/xhtml+xml",
             "image/jpeg",
+            "image/gif",
             "application/x-dtbncx+xml",
             "application/javascript",
             "text/css",
             "application/x-font-ttf",  # @@@
+            "application/x-font-truetype",  # @@@
             "application/vnd.ms-opentype",  # @@@
             "font/otf",  # @@@
         ], child.attrib["media-type"]
@@ -276,7 +287,8 @@ def process_ncx(path: Path) -> dict:
                     "dtb:depth",
                     "dtb:totalPageCount",
                     "dtb:maxPageNumber",
-                ]
+                    "dtb:generator",
+                ], head_child.attrib["name"]
                 if head_child.attrib["name"] == "dtb:uid":
                     uid = head_child.attrib["content"]
         elif child.tag == ncx("docTitle"):

@@ -33,7 +33,9 @@ The results are in tuple form if `--recurse` is used, otherwise they are in a di
 
 Note that the name `extract-map` is historical and will likely change.
 
-These three variants will soon be combined:
+- `pengolodh text <path-to-unzipped-epub> <item-ref> [--address <address>]`
+
+will extract the plain text of the given item (or the specific address, if given)
 
 ## Some Examples of `extract-map`
 
@@ -53,6 +55,8 @@ $ pengolodh extract-map <path-to-unzipped-epub> --itemref chapter01 --address 1.
 $ pengolodh extract-map <path-to-unzipped-epub> --itemref chapter01 --address 1.3.2 --recurse
 ('h2.chapterTitle', 7, 20, [('span.bold', 7, 20, [])])
 ```
+
+`$ pengolodh text <path-to-unzipped-epub> chapter01 --address 1.3.2` will then give the extracted plain text.
 
 ## What is an `item-ref`?
 

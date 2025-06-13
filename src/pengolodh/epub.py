@@ -112,14 +112,14 @@ def process_metadata(metadata_element: etree._Element) -> dict:
             assert set(child.keys()) in [
                 {"id"},
                 {opf("role"), opf("file-as")},
-                {},
+                set(),
             ], child.attrib
             assert len(child) == 0
             # print(child.text)  # @@@
         elif child.tag == dc("contributor"):
             assert set(child.keys()) in [
                 {opf("role")},
-                {},
+                set(),
             ], child.attrib
             assert len(child) == 0
             # print(child.text)  # @@@

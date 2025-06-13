@@ -1,10 +1,11 @@
+from json import dumps
 from pathlib import Path
 from typing import Optional
 
 import typer
 
 from .epub import process_volume
-from .extract import extract_fragment2
+from .extract import extract_fragment2, extract_fragment3
 
 
 app = typer.Typer()
@@ -36,3 +37,11 @@ def extract_map(volume_path: str, itemref: str, address: Optional[str] = None) -
     print(extract_fragment2(file_path, address))
 
 
+@app.command()
+def extract_map2(volume_path: str, itemref: str, address: Optional[str] = None) -> None:
+
+    volume_data = process_volume(Path(volume_path))
+    manifest = volume_data["manifest"]
+    file_path = manifest[itemref]["path"]
+
+    print(dumps(extract_fragment3(file_path, address)))

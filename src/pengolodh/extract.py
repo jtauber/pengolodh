@@ -56,3 +56,30 @@ def extract_fragment2(filename: Path, address: str | None = None) -> dict:
         "length": len(element_text),
         "child_count": len(element),
     }
+
+
+def extract_fragment3(filename: Path, address: str | None = None) -> dict:
+    element, offset, _ = extract_fragment(filename, address)
+
+    return recursive_extract(element, offset)[1]
+
+
+def recursive_extract(element: etree._Element, offset: int) -> dict:
+    element_text = etree.tostring(element, method="text", encoding="unicode", with_tail=False)
+
+    children = []
+
+    child_offset = offset + len(element.text or "")
+    for child in element:
+        child_text, child_data = recursive_extract(child, child_offset)
+        children.append(child_data)
+        child_offset += len(child_text) + len(child.tail or "")
+
+    return (
+        element_text, (
+            make_label(element),
+            offset,
+            len(element_text),
+            children,
+        )
+    )

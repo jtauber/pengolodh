@@ -231,7 +231,7 @@ def process_guide(guide: etree._Element) -> None:
     for child in guide:
         assert child.tag == opf("reference")
         assert set(child.keys()) == {"type", "title", "href"}
-        assert child.attrib["type"] in ["cover", "toc", "text", "start", "copyright-page"]
+        assert child.attrib["type"] in ["cover", "toc", "text", "start", "copyright-page", "title-page"]
         assert child.attrib["title"]
         assert child.attrib["href"]
         assert len(child) == 0

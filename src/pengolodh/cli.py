@@ -123,4 +123,5 @@ def xml(book_id_or_path: str, itemref: str, address: Optional[str] = None) -> No
     manifest = volume_data["manifest"]
     file_path = manifest[itemref]["path"]
 
-    print(extract_xml(file_path, address))
+    console = Console()
+    console.print(extract_xml(file_path, address))

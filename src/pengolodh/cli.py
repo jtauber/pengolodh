@@ -108,7 +108,7 @@ def extract_map(book_id_or_path: str, itemref: Optional[str] = None, address: Op
 
 
 def build_tree(node, data, depth: Optional[int] = None):
-    address, label, offset, total_length, text_length, children, tail_length = data
+    address, label, offset, total_length, text, children, tail = data
 
     if "#" in label:
         a, d = label.split("#")
@@ -129,15 +129,15 @@ def build_tree(node, data, depth: Optional[int] = None):
 
     child_node = node.add(styled_label, style="not bold")
 
-    if text_length:
-        child_node.add(f"[yellow]{text_length}[/yellow]")
+    if text:
+        child_node.add(f"[yellow]{repr(text)}[/yellow]")
 
     if depth is None or depth > 0:
         for child in children:
             build_tree(child_node, child, None if depth is None else depth - 1)
 
-    if tail_length:
-        node.add(f"[yellow]{tail_length}[/yellow]")
+    if tail:
+        node.add(f"[yellow]{repr(tail)}[/yellow]")
 
 
 @app.command()

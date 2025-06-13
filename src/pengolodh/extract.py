@@ -4,8 +4,8 @@ from typing import TypedDict
 from lxml import etree  # type: ignore[import-untyped]
 
 
-# (address, label, offset, total_length, text_length, children, tail_length)
-type NodeTuple = tuple[str, str, int, int, int, list[NodeTuple], int]
+# (address, label, offset, total_length, text, children, tail)
+type NodeTuple = tuple[str, str, int, int, str, list[NodeTuple], str]
 
 
 class NodeDict(TypedDict):
@@ -84,9 +84,9 @@ def extract_tuple(element: etree._Element, offset: int, recurse: bool, address: 
         make_label(element),
         offset,
         len(element_text),
-        0 if element.text is None else len(element.text),
+        "" if element.text is None else element.text,
         children,
-        0 if element.tail is None else len(element.tail)
+        "" if element.tail is None else element.tail,
     )
 
     return (element_text, node_tuple)

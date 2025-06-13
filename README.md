@@ -62,9 +62,10 @@ $ pengolodh extract-map <book-id-or-path> --itemref chapter01 --address 1.3.2 --
 
 This can either be the full path to an unzipped EPUB or a book identifier set in `$XDG_CONFIG/pengolodh.toml` as follows:
 
-```toml
+```
 [books]
 <book-id> = "<path-to-unzipped-epub>"
+...
 ```
 
 ## What is an `item-ref`?

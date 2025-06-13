@@ -29,6 +29,12 @@ will do the above but for the node with the given `address` rather than the root
 
 Note that the name `extract-map` is historical and will likely change.
 
+These three variants will soon be combined:
+
+- `extract-map` gives summary information about an element (or the root if no `address` given) in a specific file (by `item-ref`) in the EPUB.
+- `extract-map2` recursively gives summary information about an element (or the root) and its descendants in a specific file in the EPUB.
+- `extract-map3` recursively gives summary information about every element in every file in the EPUB.
+
 ## What is an `item-ref`?
 
 An `item-ref` is an identifier for a particular HTML file in the EPUB given by the first column of the output of the `spine` command.

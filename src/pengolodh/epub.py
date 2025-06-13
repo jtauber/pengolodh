@@ -110,6 +110,7 @@ def process_metadata(metadata_element: etree._Element) -> dict:
             metadata["title"] = child.text
         elif child.tag == dc("creator"):
             assert set(child.keys()) in [
+                {"id"},
                 {opf("role"), opf("file-as")},
                 {},
             ], child.attrib

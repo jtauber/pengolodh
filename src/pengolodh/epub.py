@@ -78,7 +78,7 @@ def process_opf(parent: Path | zipfile.Path, rootfile: str) -> dict:
             metadata = process_metadata(child)
         elif child.tag == opf("manifest"):
             # @@@ not sure how to make this type check
-            manifest = process_manifest(path.parent, child)  # type: ignore[assignment]
+            manifest = process_manifest(path.parent, child)  # type: ignore
         elif child.tag == opf("spine"):
             spine = process_spine(child)
         elif child.tag == opf("guide"):

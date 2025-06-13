@@ -28,33 +28,19 @@ def spine(path_string: str):
 
 
 @app.command()
-def extract_map(volume_path: str, itemref: str, address: Optional[str] = None) -> None:
+def extract_map(volume_path: str, itemref: Optional[str] = None, address: Optional[str] = None, recurse: bool = False) -> None:
 
     volume_data = process_volume(Path(volume_path))
     manifest = volume_data["manifest"]
-    file_path = manifest[itemref]["path"]
 
-    print(extract_node(file_path, address, recurse=False, dictionary=True))
-
-
-@app.command()
-def extract_map2(volume_path: str, itemref: str, address: Optional[str] = None) -> None:
-
-    volume_data = process_volume(Path(volume_path))
-    manifest = volume_data["manifest"]
-    file_path = manifest[itemref]["path"]
-
-    print(dumps(extract_node(file_path, address, recurse=True, dictionary=False)))
-
-
-@app.command()
-def extract_map3(volume_path: str) -> None:
-
-    items = []
-    volume_data = process_volume(Path(volume_path))
-    manifest = volume_data["manifest"]
-    for itemref in volume_data["spine"]["itemrefs"]:
+    if itemref is None:
+        items = []
+        volume_data = process_volume(Path(volume_path))
+        manifest = volume_data["manifest"]
+        for item_ref in volume_data["spine"]["itemrefs"]:
+            file_path = manifest[item_ref]["path"]
+            items.append([item_ref, extract_node(file_path, address=None, recurse=recurse, dictionary=not recurse)])
+        print(dumps(items, indent=2))
+    else:
         file_path = manifest[itemref]["path"]
-        items.append([itemref, extract_node(file_path, address=None, recurse=True, dictionary=False)])
-    
-    print(dumps(items, indent=2))
+        print(extract_node(file_path, address, recurse=recurse, dictionary=not recurse))

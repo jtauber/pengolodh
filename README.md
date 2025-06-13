@@ -19,21 +19,40 @@ will either print the title of the volume or, if the assertions are too strict, 
 
 will either print the "spine" of the volume, or, if the assertions are too strict, throw an exception.
 
-- `pengolodh extract-map <path-to-unzipped-epub> <item-ref>`
+- `pengolodh extract-map <path-to-unzipped-epub> [--itemref <item-ref>] [--address <address>] [--recurse]`
 
-will give information about the root node of the given item.
+will give information about HTML elements in the EPUB.
 
-- `pengolodh extract-map <path-to-unzipped-epub> <item-ref> --address <address>`
+If there is an `--itemref` then only that item (i.e. file) will be considered otherwise all items will be traversed.
 
-will do the above but for the node with the given `address` rather than the root node.
+If there is an `--address` then only that element will be extracted otherwise the root will be extracted.
+
+If there is a `--recurse` then information about the descendants will also be given.
+
+The results are in tuple form if `--recurse` is used, otherwise they are in a dictionary.
 
 Note that the name `extract-map` is historical and will likely change.
 
 These three variants will soon be combined:
 
-- `extract-map` gives summary information about an element (or the root if no `address` given) in a specific file (by `item-ref`) in the EPUB.
-- `extract-map2` recursively gives summary information about an element (or the root) and its descendants in a specific file in the EPUB.
-- `extract-map3` recursively gives summary information about every element in every file in the EPUB.
+## Some Examples of `extract-map`
+
+```
+❯ pengolodh extract-map <path-to-unzipped-epub> --itemref chapter01
+{'label': 'body.text#text', 'offset': 0, 'length': 170401, 'child_count': 1}
+
+❯ pengolodh extract-map <path-to-unzipped-epub> --itemref chapter01 --address 1
+{'label': 'div.chapter#chapter01', 'offset': 1, 'length': 170400, 'child_count': 4}
+
+❯ pengolodh extract-map <path-to-unzipped-epub> --itemref chapter01 --address 1.3.2
+{'label': 'h2.chapterTitle', 'offset': 7, 'length': 20, 'child_count': 1}
+
+❯ pengolodh extract-map <path-to-unzipped-epub> --itemref chapter01 --address 1.3.2.1
+{'label': 'span.bold', 'offset': 7, 'length': 20, 'child_count': 0}
+
+❯ pengolodh extract-map <path-to-unzipped-epub> --itemref chapter01 --address 1.3.2 --recurse
+('h2.chapterTitle', 7, 20, [('span.bold', 7, 20, [])])
+```
 
 ## What is an `item-ref`?
 

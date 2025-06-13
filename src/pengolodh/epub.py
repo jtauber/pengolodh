@@ -1,3 +1,4 @@
+import zipfile
 from pathlib import Path
 
 from lxml import etree  # type: ignore[import-untyped]
@@ -19,7 +20,8 @@ def xml(element_name: str) -> str:
     return "{http://www.w3.org/XML/1998/namespace}" + element_name
 
 
-def process_volume(path: Path):
+def process_volume(path: Path | zipfile.Path) -> dict:
+
     for child in path.iterdir():
         if child.name == "META-INF":
             assert child.is_dir()
@@ -32,12 +34,12 @@ def process_volume(path: Path):
         else:
             pass  # skip unknown top-level files and directories
 
-    return process_opf(path / rootfile)
+    return process_opf(path, rootfile)
 
 
-def process_container(path: Path) -> str:
+def process_container(path: Path | zipfile.Path) -> str:
     assert path.is_file()
-    container = etree.parse(path).getroot()
+    container = etree.fromstring(path.read_bytes())
     assert container.tag == "{urn:oasis:names:tc:opendocument:xmlns:container}container"
     assert container.attrib == {"version": "1.0"}
     assert len(container) == 1
@@ -55,14 +57,16 @@ def process_container(path: Path) -> str:
     return str(rootfile.attrib["full-path"])
 
 
-def process_opf(path: Path) -> dict:
+def process_opf(parent: Path | zipfile.Path, rootfile: str) -> dict:
+    path = parent / rootfile
     assert path.is_file()
-    package = etree.parse(path).getroot()
+    package = etree.fromstring(path.read_bytes())
     assert package.tag == opf("package")
     assert set(package.keys()) in [
         {"version", "unique-identifier"},
+        {"version", "unique-identifier", "prefix"},
         {"version", "unique-identifier", xml("lang")},
-    ]
+    ], package.attrib
     version = package.attrib["version"]
     assert version in ["2.0", "3.0"]
     unique_identifier = package.attrib["unique-identifier"]
@@ -73,7 +77,8 @@ def process_opf(path: Path) -> dict:
         if child.tag == opf("metadata"):
             metadata = process_metadata(child)
         elif child.tag == opf("manifest"):
-            manifest = process_manifest(path.parent, child)
+            # @@@ not sure how to make this type check
+            manifest = process_manifest(path.parent, child)  # type: ignore[assignment]
         elif child.tag == opf("spine"):
             spine = process_spine(child)
         elif child.tag == opf("guide"):
@@ -153,7 +158,10 @@ def process_metadata(metadata_element: etree._Element) -> dict:
             # print(child.text)  # @@@
         elif child.tag == opf("meta"):
             if "property" in child.attrib:
-                assert child.attrib["property"] == "dcterms:modified"
+                assert child.attrib["property"] in [
+                    "dcterms:modified",
+                    "role",
+                ], child.attrib["property"]
                 assert len(child) == 0
                 #  print(child.text)  # @@@
             else:
@@ -166,7 +174,7 @@ def process_metadata(metadata_element: etree._Element) -> dict:
     return metadata
 
 
-def process_manifest(parent_path: Path, manifest_element: etree._Element) -> dict:
+def process_manifest(parent_path: Path | zipfile.Path, manifest_element: etree._Element) -> dict:
 
     assert manifest_element.tag == opf("manifest")
     assert manifest_element.attrib == {}
@@ -180,7 +188,9 @@ def process_manifest(parent_path: Path, manifest_element: etree._Element) -> dic
             {"id", "href", "media-type", "properties"},
         ], child.keys()
         if "properties" in child.attrib:
-            assert child.attrib["properties"] in ["nav", "cover-image"]
+            assert child.attrib["properties"] in [
+                "nav", "cover-image", "svg"
+            ], child.attrib["properties"]
         assert child.attrib["media-type"] in [
             "application/vnd.adobe-page-template+xml",  # @@@
             "application/xhtml+xml",
@@ -245,7 +255,7 @@ def process_ncx(path: Path) -> dict:
 
     assert path.is_file()
 
-    ncx_root = etree.parse(path).getroot()
+    ncx_root = etree.fromstring(path.read_bytes())
 
     assert ncx_root.tag == ncx("ncx")
     # could also have an xml:lang
@@ -290,6 +300,8 @@ def process_ncx(path: Path) -> dict:
             assert len(child) > 0
             for navPoint in child:
                 navMap.append(process_nav_point(path.parent, navPoint))
+        elif child.tag == ncx("pageList"):
+            pass  # @@@
         else:
             raise ValueError(child.tag)
 
@@ -304,11 +316,11 @@ def process_ncx(path: Path) -> dict:
 def process_nav_point(root_path: Path, navPoint: etree._Element, level: int = 0):
 
     assert navPoint.tag == ncx("navPoint")
-    # could also have a 'class' attribute
-    # assert set(navPoint.keys()) == {"id", "playOrder"}
+    # could also have a 'class' or 'nav0' attribute
+    # assert set(navPoint.keys()) == {"id", "playOrder"}, navPoint.attrib
     assert len(navPoint) > 0
 
-    playOrder = navPoint.attrib["playOrder"]
+    playOrder = navPoint.attrib.get("playOrder")
     children = []
 
     for navPoint_child in navPoint:

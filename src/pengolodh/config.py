@@ -1,6 +1,6 @@
 import tomllib
 
-from xdg_base_dirs import xdg_config_home
+from xdg_base_dirs import xdg_config_home  # type: ignore[import-not-found]
 
 
 CONFIG_FILE = xdg_config_home() / "pengolodh.toml"

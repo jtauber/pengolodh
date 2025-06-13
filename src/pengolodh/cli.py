@@ -2,10 +2,11 @@ from json import dumps
 from pathlib import Path
 import sys
 from typing import Optional
+import zipfile
 
-from rich import print as rich_print
-from rich.console import Console
-from rich.table import Table
+from rich import print as rich_print  # type: ignore[import-not-found]
+from rich.console import Console  # type: ignore[import-not-found]
+from rich.table import Table  # type: ignore[import-not-found]
 
 import typer  # type: ignore
 
@@ -25,14 +26,26 @@ def print_error(message: str) -> None:
     rich_print(f"[red]{message}[/red]", file=sys.stderr)
 
 
-def get_path(book_id_or_path: str) -> Path:
+def get_path(book_id_or_path: str) -> Path | zipfile.Path:
+
     books = books_configuration()
+
     if book_id_or_path in books:
         path_string = books[book_id_or_path]
         print_info(f"using {path_string}")
     else:
         path_string = book_id_or_path
-    return Path(path_string)
+
+    path = Path(path_string)
+    book_path: Path | zipfile.Path
+    if not path.is_dir():
+        if not zipfile.is_zipfile(path):
+            raise ValueError(f"Path {path} is not a directory or a valid EPUB file.")
+        book_path = zipfile.Path(zipfile.ZipFile(path))
+    else:
+        book_path = path
+    
+    return book_path
 
 
 @app.command()

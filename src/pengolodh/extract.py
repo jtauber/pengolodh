@@ -29,8 +29,8 @@ def get_text(element: etree._Element) -> str:
     return etree.tostring(element, method="text", encoding="unicode", with_tail=False)
 
 
-def element_and_offset(filename: Path, address: str | None) -> tuple[etree._Element, int]:
-    root = etree.parse(filename).getroot()
+def element_and_offset(path: Path, address: str | None) -> tuple[etree._Element, int]:
+    root = etree.fromstring(path.read_bytes())
 
     # start with the body
     element = root[1]
@@ -50,9 +50,9 @@ def element_and_offset(filename: Path, address: str | None) -> tuple[etree._Elem
     return element, offset
 
 
-def extract_node(filename: Path, address: str | None, recurse: bool, dictionary: bool) -> NodeTuple | NodeDict:
+def extract_node(path: Path, address: str | None, recurse: bool, dictionary: bool) -> NodeTuple | NodeDict:
 
-    element, offset = element_and_offset(filename, address)
+    element, offset = element_and_offset(path, address)
 
     if dictionary:
         # note: recurse is ignored for dictionary output

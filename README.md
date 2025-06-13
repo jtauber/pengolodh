@@ -38,19 +38,19 @@ These three variants will soon be combined:
 ## Some Examples of `extract-map`
 
 ```
-❯ pengolodh extract-map <path-to-unzipped-epub> --itemref chapter01
+$ pengolodh extract-map <path-to-unzipped-epub> --itemref chapter01
 {'label': 'body.text#text', 'offset': 0, 'length': 170401, 'child_count': 1}
 
-❯ pengolodh extract-map <path-to-unzipped-epub> --itemref chapter01 --address 1
+$ pengolodh extract-map <path-to-unzipped-epub> --itemref chapter01 --address 1
 {'label': 'div.chapter#chapter01', 'offset': 1, 'length': 170400, 'child_count': 4}
 
-❯ pengolodh extract-map <path-to-unzipped-epub> --itemref chapter01 --address 1.3.2
+$ pengolodh extract-map <path-to-unzipped-epub> --itemref chapter01 --address 1.3.2
 {'label': 'h2.chapterTitle', 'offset': 7, 'length': 20, 'child_count': 1}
 
-❯ pengolodh extract-map <path-to-unzipped-epub> --itemref chapter01 --address 1.3.2.1
+$ pengolodh extract-map <path-to-unzipped-epub> --itemref chapter01 --address 1.3.2.1
 {'label': 'span.bold', 'offset': 7, 'length': 20, 'child_count': 0}
 
-❯ pengolodh extract-map <path-to-unzipped-epub> --itemref chapter01 --address 1.3.2 --recurse
+$ pengolodh extract-map <path-to-unzipped-epub> --itemref chapter01 --address 1.3.2 --recurse
 ('h2.chapterTitle', 7, 20, [('span.bold', 7, 20, [])])
 ```
 

@@ -45,3 +45,16 @@ def extract_map2(volume_path: str, itemref: str, address: Optional[str] = None) 
     file_path = manifest[itemref]["path"]
 
     print(dumps(extract_fragment3(file_path, address)))
+
+
+@app.command()
+def extract_map3(volume_path: str) -> None:
+
+    items = []
+    volume_data = process_volume(Path(volume_path))
+    manifest = volume_data["manifest"]
+    for itemref in volume_data["spine"]["itemrefs"]:
+        file_path = manifest[itemref]["path"]
+        items.append([itemref, extract_fragment3(file_path)])
+    
+    print(dumps(items, indent=2))

@@ -15,6 +15,10 @@ def ncx(element_name: str) -> str:
     return "{http://www.daisy.org/z3986/2005/ncx/}" + element_name
 
 
+def xml(element_name: str) -> str:
+    return "{http://www.w3.org/XML/1998/namespace}" + element_name
+
+
 def process_volume(path: Path):
     for child in path.iterdir():
         if child.name == "META-INF":
@@ -55,7 +59,7 @@ def process_opf(path: Path) -> dict:
     assert path.is_file()
     package = etree.parse(path).getroot()
     assert package.tag == opf("package")
-    assert set(package.keys()) == {"version", "unique-identifier"}
+    assert set(package.keys()) == {"version", "unique-identifier", xml("lang")}
     version = package.attrib["version"]
     assert version in ["2.0", "3.0"]
     unique_identifier = package.attrib["unique-identifier"]

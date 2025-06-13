@@ -1,0 +1,58 @@
+from pathlib import Path
+
+from lxml import etree
+
+
+def make_label(el: etree._Element) -> str:
+
+    label = el.tag.split("}")[-1]
+    if el.attrib.has_key("class"):
+        label += "." + str(el.attrib["class"])
+    if el.attrib.has_key("id"):
+        label += "#" + str(el.attrib["id"])
+
+    return label
+
+
+def extract_fragment(filename: Path, ref: str | None = None, debug=False) -> tuple[etree._Element, int, str]:
+
+    root = etree.parse(filename).getroot()
+
+    # start with the body
+    element = root[1]
+
+    # the full text of the body 
+    full_content = etree.tostring(element, method="text", encoding="unicode")
+
+    offset = 0
+
+    if ref:
+        for idx in [int(i) - 1 for i in ref.split(".")]:
+            offset += len(element.text or "")
+            for j in range(idx):
+                pre_element = element[j]
+                pre_content = etree.tostring(pre_element, method="text", encoding="unicode", with_tail=False)
+                if debug:
+                    print("  ", j + 1, pre_element.tag.split("}")[-1], len(pre_content), len(pre_element.tail or ""))
+                offset += len(pre_content) + len(pre_element.tail or "")
+            if debug:
+                print("@", offset)
+            child = element[idx]
+            if debug:
+                content = etree.tostring(child, method="text", encoding="unicode", with_tail=False)
+                print(idx + 1, make_label(child), len(full_content), len(child.tail or ""), repr(content[:5]), repr((child.tail or "")[:5]))
+            element = child
+
+    return element, offset, full_content
+
+
+def extract_fragment2(filename: Path, address: str | None = None) -> dict:
+    element, offset, _ = extract_fragment(filename, address)
+    element_text = etree.tostring(element, method="text", encoding="unicode", with_tail=False)
+
+    return {
+        "label": make_label(element),
+        "offset": offset,
+        "length": len(element_text),
+        "child_count": len(element),
+    }

@@ -11,9 +11,9 @@ Initially focused on extracting text from EPUBs for citation and stand-off annot
 
 ## To Run
 
-- `pengolodh volume <book-id-or-path>`
+- `pengolodh title <book-id-or-path>`
 
-will either print the title of the volume or, if the assertions are too strict, throw an exception.
+will either print the title (from both metadata and ncx) of the volume or, if the assertions are too strict, throw an exception.
 
 - `pengolodh spine <book-id-or-path>`
 

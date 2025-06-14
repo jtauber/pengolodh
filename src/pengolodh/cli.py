@@ -67,11 +67,11 @@ def list_books() -> None:
 
 
 @app.command()
-def volume(book_id_or_path: str):
+def title(book_id_or_path: str):
     path = get_path(book_id_or_path)
     volume_data = process_volume(path)
-    print(volume_data["metadata"]["title"])
-    print(volume_data["ncx"]["title"])
+    print("Metadata:", volume_data["metadata"]["title"])
+    print("NCX:", volume_data["ncx"]["title"])
 
 
 @app.command()

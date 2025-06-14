@@ -177,6 +177,10 @@ def extract_map(
             items.append([item_ref, extract_node(file_path, address=None, recurse=recurse, dictionary=not recurse)])
         print(dumps(items, indent=2))
     else:
+        if itemref not in manifest:
+            print_error(f"Item reference '{itemref}' not found in the manifest.")
+            return
+
         file_path = manifest[itemref]["path"]
         print(extract_node(file_path, address, recurse=recurse, dictionary=not recurse))
 
@@ -225,6 +229,10 @@ def tree(
     volume_data = process_volume(path)
     manifest = volume_data["manifest"]
 
+    if itemref not in manifest:
+        print_error(f"Item reference '{itemref}' not found in the manifest.")
+        return
+
     file_path = manifest[itemref]["path"]
     tree = Tree(itemref, style="bold")
     node = extract_node(file_path, address, recurse=True, dictionary=False)
@@ -243,6 +251,11 @@ def text(
     path = get_path(book_id_or_path)
     volume_data = process_volume(path)
     manifest = volume_data["manifest"]
+
+    if itemref not in manifest:
+        print_error(f"Item reference '{itemref}' not found in the manifest.")
+        return
+
     file_path = manifest[itemref]["path"]
 
     print(extract_text(file_path, address))
@@ -257,6 +270,11 @@ def xml(
     path = get_path(book_id_or_path)
     volume_data = process_volume(path)
     manifest = volume_data["manifest"]
+
+    if itemref not in manifest:
+        print_error(f"Item reference '{itemref}' not found in the manifest.")
+        return
+
     file_path = manifest[itemref]["path"]
 
     console = Console()

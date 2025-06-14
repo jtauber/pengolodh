@@ -28,7 +28,7 @@ def print_error(message: str) -> None:
     rich_print(f"[red]{message}[/red]", file=sys.stderr)
 
 
-def get_path(book_id_or_path: str) -> Path | zipfile.Path:
+def get_path(book_id_or_path: str) -> Path | zipfile.Path | None:
 
     books = books_configuration()
 
@@ -42,7 +42,8 @@ def get_path(book_id_or_path: str) -> Path | zipfile.Path:
     book_path: Path | zipfile.Path
     if not path.is_dir():
         if not zipfile.is_zipfile(path):
-            raise ValueError(f"Path {path} is not a directory or a valid EPUB file.")
+            print_error(f"Path {path} is not a directory or a valid EPUB file.")
+            return None
         book_path = zipfile.Path(zipfile.ZipFile(path))
     else:
         book_path = path
@@ -70,64 +71,68 @@ def list_books() -> None:
 @app.command()
 def title(book_id_or_path: str):
     path = get_path(book_id_or_path)
-    volume_data = process_volume(path)
-    print("Metadata:", volume_data["metadata"]["title"])
-    print("NCX:", volume_data["ncx"]["title"])
+    if path:
+        volume_data = process_volume(path)
+        print("Metadata:", volume_data["metadata"]["title"])
+        print("NCX:", volume_data["ncx"]["title"])
 
 
 @app.command()
 def container(book_id_or_path: str):
     epub_root = get_path(book_id_or_path)
-    opf_path = epub_root / process_container(epub_root / "META-INF/container.xml") 
-    print(opf_path)
+    if epub_root:
+        opf_path = epub_root / process_container(epub_root / "META-INF/container.xml") 
+        print(opf_path)
 
 
 @app.command()
 def opf(book_id_or_path: str):
     epub_root = get_path(book_id_or_path)
-    opf_path = process_container(epub_root / "META-INF/container.xml")
-    opf_data = process_opf(epub_root, opf_path)
-    rich_print("OPF Version:      ", opf_data["version"])
-    rich_print("Unique Identifier:", opf_data["unique_identifier"])
-    rich_print("Prefix:           ", opf_data["prefix"])
-    rich_print("XML Language:     ", opf_data["xml_lang"])
-    print()
-    print(opf_data["metadata"])
-    print()
+    if epub_root:
+        opf_path = process_container(epub_root / "META-INF/container.xml")
+        opf_data = process_opf(epub_root, opf_path)
+        rich_print("OPF Version:      ", opf_data["version"])
+        rich_print("Unique Identifier:", opf_data["unique_identifier"])
+        rich_print("Prefix:           ", opf_data["prefix"])
+        rich_print("XML Language:     ", opf_data["xml_lang"])
+        print()
+        print(opf_data["metadata"])
+        print()
 
-    table = Table(title="Manifest")
-    table.add_column("id", style="cyan")
-    table.add_column("href", style="magenta")
-    table.add_column("media-type", style="green")
-    table.add_column("properties", style="yellow")
+        table = Table(title="Manifest")
+        table.add_column("id", style="cyan")
+        table.add_column("href", style="magenta")
+        table.add_column("media-type", style="green")
+        table.add_column("properties", style="yellow")
 
-    for item_id, item_data in opf_data["manifest"].items():
-        table.add_row(item_id, item_data["href"], item_data.get("media-type", ""), item_data.get("properties", ""))
+        for item_id, item_data in opf_data["manifest"].items():
+            table.add_row(item_id, item_data["href"], item_data.get("media-type", ""), item_data.get("properties", ""))
 
-    console = Console()
-    console.print(table)
+        console = Console()
+        console.print(table)
 
 
 @app.command()
 def spine(book_id_or_path: str):
     path = get_path(book_id_or_path)
-    volume_data = process_volume(path)
-    manifest = volume_data["manifest"]
+    if path:
+        volume_data = process_volume(path)
+        manifest = volume_data["manifest"]
 
-    console = Console()
+        console = Console()
 
-    table = Table(title="Spine")
-    table.add_column("Item Ref", style="cyan")
-    table.add_column("Path", style="magenta")
+        table = Table(title="Spine")
+        table.add_column("Item Ref", style="cyan")
+        table.add_column("Path", style="magenta")
 
-    for itemref in volume_data["spine"]["itemrefs"]:
-        table.add_row(itemref, str(manifest[itemref]["href"]))
+        for itemref in volume_data["spine"]["itemrefs"]:
+            table.add_row(itemref, str(manifest[itemref]["href"]))
 
-    console.print(table)
-    console.print(
-        f"[bold]TOC ID[/bold]:",
-        f"[cyan]{volume_data['spine']['toc_id']}[/cyan]", 
-        f"[magenta]{manifest[volume_data['spine']['toc_id']]['href']}[/magenta]",)
+        console.print(table)
+        console.print(
+            f"[bold]TOC ID[/bold]:",
+            f"[cyan]{volume_data['spine']['toc_id']}[/cyan]", 
+            f"[magenta]{manifest[volume_data['spine']['toc_id']]['href']}[/magenta]",)
 
 
 def build_nav_tree(node, nav_point) -> None:
@@ -147,16 +152,17 @@ def build_nav_tree(node, nav_point) -> None:
 @app.command()
 def ncx(book_id_or_path: str):
     path = get_path(book_id_or_path)
-    volume_data = process_volume(path)
-    print(volume_data["ncx"]["title"])
-    print(volume_data["ncx"]["head"])
+    if path:
+        volume_data = process_volume(path)
+        print(volume_data["ncx"]["title"])
+        print(volume_data["ncx"]["head"])
 
-    tree = Tree("[bold]NCX[/bold]")
-    for nav_point in volume_data["ncx"]["navMap"]:
-        build_nav_tree(tree, nav_point)
+        tree = Tree("[bold]NCX[/bold]")
+        for nav_point in volume_data["ncx"]["navMap"]:
+            build_nav_tree(tree, nav_point)
 
-    console = Console()
-    console.print(tree)
+        console = Console()
+        console.print(tree)
 
 
 @app.command()
@@ -167,22 +173,23 @@ def extract_map(
     recurse: bool = False
 ) -> None:
     path = get_path(book_id_or_path)
-    volume_data = process_volume(path)
-    manifest = volume_data["manifest"]
+    if path:
+        volume_data = process_volume(path)
+        manifest = volume_data["manifest"]
 
-    if itemref is None:
-        items = []
-        for item_ref in volume_data["spine"]["itemrefs"]:
-            file_path = manifest[item_ref]["path"]
-            items.append([item_ref, extract_node(file_path, address=None, recurse=recurse, dictionary=not recurse)])
-        print(dumps(items, indent=2))
-    else:
-        if itemref not in manifest:
-            print_error(f"Item reference '{itemref}' not found in the manifest.")
-            return
+        if itemref is None:
+            items = []
+            for item_ref in volume_data["spine"]["itemrefs"]:
+                file_path = manifest[item_ref]["path"]
+                items.append([item_ref, extract_node(file_path, address=None, recurse=recurse, dictionary=not recurse)])
+            print(dumps(items, indent=2))
+        else:
+            if itemref not in manifest:
+                print_error(f"Item reference '{itemref}' not found in the manifest.")
+                return
 
-        file_path = manifest[itemref]["path"]
-        print(extract_node(file_path, address, recurse=recurse, dictionary=not recurse))
+            file_path = manifest[itemref]["path"]
+            print(extract_node(file_path, address, recurse=recurse, dictionary=not recurse))
 
 
 def build_tree(node, data, depth: Optional[int] = None):
@@ -221,14 +228,17 @@ def build_tree(node, data, depth: Optional[int] = None):
 def get_file_path(book_id_or_path: str, itemref: str) -> Path | None:
 
     path = get_path(book_id_or_path)
-    volume_data = process_volume(path)
-    manifest = volume_data["manifest"]
+    if path:
+        volume_data = process_volume(path)
+        manifest = volume_data["manifest"]
 
-    if itemref not in manifest:
-        print_error(f"Item reference '{itemref}' not found in the manifest.")
-        return
+        if itemref not in manifest:
+            print_error(f"Item reference '{itemref}' not found in the manifest.")
+            return None
 
-    return manifest[itemref]["path"]
+        return manifest[itemref]["path"]
+    else:
+        return None
 
 
 @app.command()

@@ -67,7 +67,7 @@ def extract_node(path: Path, address: str | None, recurse: bool, dictionary: boo
 def extract_tuple(element: etree._Element, offset: int, recurse: bool, address: str | None) -> tuple[str, NodeTuple]:
     element_text = get_text(element)
 
-    children = []
+    children: list[NodeTuple] = []
 
     if recurse:
         child_offset = offset + len(element.text or "")

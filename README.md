@@ -19,11 +19,11 @@ will either print the title (from both metadata and ncx) of the volume or, if th
 
 will either print the "spine" of the volume, or, if the assertions are too strict, throw an exception.
 
-- `pengolodh extract-map <book-id-or-path> [--itemref <item-ref>] [--address <address>] [--recurse]`
+- `pengolodh extract-map <book-id-or-path> [<item-ref>] [--address <address>] [--recurse]`
 
 will give information about HTML elements in the EPUB.
 
-If there is an `--itemref` then only that item (i.e. file) will be considered otherwise all items will be traversed.
+If there is an `item-ref` then only that item (i.e. file) will be considered otherwise all items will be traversed.
 
 If there is an `--address` then only that element will be extracted otherwise the root will be extracted.
 
@@ -52,19 +52,19 @@ will list any books configured with ids (see under What is a `book-id-or-path`?)
 ## Some Examples of `extract-map`
 
 ```
-$ pengolodh extract-map <book-id-or-path> --itemref chapter01
+$ pengolodh extract-map <book-id-or-path> chapter01
 {'label': 'body.text#text', 'offset': 0, 'length': 170401, 'child_count': 1}
 
-$ pengolodh extract-map <book-id-or-path> --itemref chapter01 --address 1
+$ pengolodh extract-map <book-id-or-path> chapter01 --address 1
 {'label': 'div.chapter#chapter01', 'offset': 1, 'length': 170400, 'child_count': 4}
 
-$ pengolodh extract-map <book-id-or-path> --itemref chapter01 --address 1.3.2
+$ pengolodh extract-map <book-id-or-path> chapter01 --address 1.3.2
 {'label': 'h2.chapterTitle', 'offset': 7, 'length': 20, 'child_count': 1}
 
-$ pengolodh extract-map <book-id-or-path> --itemref chapter01 --address 1.3.2.1
+$ pengolodh extract-map <book-id-or-path> chapter01 --address 1.3.2.1
 {'label': 'span.bold', 'offset': 7, 'length': 20, 'child_count': 0}
 
-$ pengolodh extract-map <book-id-or-path> --itemref chapter01 --address 1.3.2 --recurse
+$ pengolodh extract-map <book-id-or-path> chapter01 --address 1.3.2 --recurse
 ('h2.chapterTitle', 7, 20, [('span.bold', 7, 20, [])])
 ```
 

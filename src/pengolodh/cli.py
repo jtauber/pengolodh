@@ -2,6 +2,7 @@ from json import dumps
 from pathlib import Path
 import sys
 from typing import Optional
+from typing_extensions import Annotated
 import zipfile
 
 from rich import print as rich_print  # type: ignore[import-not-found]
@@ -9,14 +10,14 @@ from rich.console import Console  # type: ignore[import-not-found]
 from rich.table import Table  # type: ignore[import-not-found]
 from rich.tree import Tree  # type: ignore[import-not-found]
 
-import typer  # type: ignore
+from typer import Typer, Argument  # type: ignore
 
 from .config import books_configuration
 from .epub import process_volume, process_container, process_opf
 from .extract import extract_node, extract_text, extract_xml
 
 
-app = typer.Typer()
+app = Typer()
 
 
 def print_info(message: str) -> None:
@@ -159,7 +160,12 @@ def ncx(book_id_or_path: str):
 
 
 @app.command()
-def extract_map(book_id_or_path: str, itemref: Optional[str] = None, address: Optional[str] = None, recurse: bool = False) -> None:
+def extract_map(
+    book_id_or_path: str,
+    itemref: Annotated[Optional[str], Argument()] = None,
+    address: Optional[str] = None,
+    recurse: bool = False
+) -> None:
     path = get_path(book_id_or_path)
     volume_data = process_volume(path)
     manifest = volume_data["manifest"]

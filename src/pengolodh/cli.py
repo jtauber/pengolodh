@@ -189,7 +189,11 @@ def extract_map(
                 return
 
             file_path = manifest[itemref]["path"]
-            print(extract_node(file_path, address, recurse=recurse, dictionary=not recurse))
+            node = extract_node(file_path, address, recurse=recurse, dictionary=not recurse)
+            if node:
+                print(node)
+            else:
+                print_error(f"Address '{address}' not found in item reference '{itemref}'.")
 
 
 def build_tree(node, data, depth: Optional[int] = None):
@@ -254,10 +258,13 @@ def tree(
     if file_path:
         tree = Tree(itemref, style="bold")
         node = extract_node(file_path, address, recurse=True, dictionary=False)
-        build_tree(tree, node, depth)
+        if node:
+            build_tree(tree, node, depth)
 
-        console = Console()
-        console.print(tree)
+            console = Console()
+            console.print(tree)
+        else:
+            print_error(f"Address '{address}' not found in item reference '{itemref}'.")
 
 
 @app.command()
@@ -270,7 +277,13 @@ def text(
     file_path = get_file_path(book_id_or_path, itemref)
 
     if file_path:
-        print(extract_text(file_path, address))
+        text = extract_text(file_path, address)
+        if text:
+            console = Console()
+            console.print(text)
+        else:
+            print_error(f"Address '{address}' not found in item reference '{itemref}'.")
+
 
 
 @app.command()
@@ -282,5 +295,9 @@ def xml(
     file_path = get_file_path(book_id_or_path, itemref)
 
     if file_path:
-        console = Console()
-        console.print(extract_xml(file_path, address))
+        xml = extract_xml(file_path, address)
+        if xml:
+            console = Console()
+            console.print(xml)
+        else:
+            print_error(f"Address '{address}' not found in item reference '{itemref}'.")

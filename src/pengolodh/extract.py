@@ -53,9 +53,12 @@ def element_and_offset(path: Path, address: str | None) -> tuple[etree._Element,
     return element, offset
 
 
-def extract_node(path: Path, address: str | None, recurse: bool, dictionary: bool) -> NodeTuple | NodeDict:
+def extract_node(path: Path, address: str | None, recurse: bool, dictionary: bool) -> NodeTuple | NodeDict | None:
 
-    element, offset = element_and_offset(path, address)
+    try:
+        element, offset = element_and_offset(path, address)
+    except IndexError:
+        return None
 
     if dictionary:
         # note: recurse is ignored for dictionary output
@@ -107,15 +110,21 @@ def extract_dict(element: etree._Element, offset: int) -> tuple[str, NodeDict]:
     return (element_text, node_dict)
 
 
-def extract_text(filename: Path, address: str | None = None) -> str:
+def extract_text(filename: Path, address: str | None = None) -> str | None:
 
-    element, _ = element_and_offset(filename, address)
+    try:
+        element, _ = element_and_offset(filename, address)
+    except IndexError:
+        return None
 
     return get_text(element)
 
 
-def extract_xml(filename: Path, address: str | None = None) -> str:
+def extract_xml(filename: Path, address: str | None = None) -> str | None:
 
-    element, _ = element_and_offset(filename, address)
+    try:
+        element, _ = element_and_offset(filename, address)
+    except IndexError:
+        return None
 
     return etree.tostring(element, method="xml", encoding="unicode", with_tail=False)

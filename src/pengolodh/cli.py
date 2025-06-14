@@ -163,7 +163,7 @@ def ncx(book_id_or_path: str):
 def extract_map(
     book_id_or_path: str,
     itemref: Annotated[Optional[str], Argument()] = None,
-    address: Optional[str] = None,
+    address: Annotated[Optional[str], Argument()] = None,
     recurse: bool = False
 ) -> None:
     path = get_path(book_id_or_path)
@@ -215,7 +215,12 @@ def build_tree(node, data, depth: Optional[int] = None):
 
 
 @app.command()
-def tree(book_id_or_path: str, itemref: str, address: Optional[str] = None, depth: Optional[int] = None) -> None:
+def tree(
+    book_id_or_path: str,
+    itemref: str,
+    address: Annotated[Optional[str], Argument()] = None,
+    depth: Optional[int] = None
+) -> None:
     path = get_path(book_id_or_path)
     volume_data = process_volume(path)
     manifest = volume_data["manifest"]
@@ -230,7 +235,11 @@ def tree(book_id_or_path: str, itemref: str, address: Optional[str] = None, dept
 
 
 @app.command()
-def text(book_id_or_path: str, itemref: str, address: Optional[str] = None) -> None:
+def text(
+    book_id_or_path: str,
+    itemref: str,
+    address: Annotated[Optional[str], Argument()] = None,
+) -> None:
     path = get_path(book_id_or_path)
     volume_data = process_volume(path)
     manifest = volume_data["manifest"]
@@ -240,7 +249,11 @@ def text(book_id_or_path: str, itemref: str, address: Optional[str] = None) -> N
 
 
 @app.command()
-def xml(book_id_or_path: str, itemref: str, address: Optional[str] = None) -> None:
+def xml(
+    book_id_or_path: str,
+    itemref: str,
+    address: Annotated[Optional[str], Argument()] = None,
+) -> None:
     path = get_path(book_id_or_path)
     volume_data = process_volume(path)
     manifest = volume_data["manifest"]

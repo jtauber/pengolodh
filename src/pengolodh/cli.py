@@ -54,10 +54,8 @@ def get_path(book_id_or_path: str) -> Path | zipfile.Path | None:
 
 @app.command()
 def list_books() -> None:
-    books = books_configuration()
-    if not books:
-        print_error("No books found.")
-    else:
+
+    if books := books_configuration():
         table = Table(title="Books")
         table.add_column("Book ID", style="cyan")
         table.add_column("Path", style="magenta")
@@ -66,12 +64,14 @@ def list_books() -> None:
             table.add_row(book_id, str(Path(path).resolve()))
 
         console.print(table)
+    else:
+        print_error("No books found.")
 
 
 @app.command()
 def title(book_id_or_path: str):
-    path = get_path(book_id_or_path)
-    if path:
+
+    if path := get_path(book_id_or_path):
         volume_data = process_volume(path)
         console.print("Metadata:", volume_data["metadata"]["title"])
         console.print("NCX:", volume_data["ncx"]["title"])
@@ -79,16 +79,16 @@ def title(book_id_or_path: str):
 
 @app.command()
 def container(book_id_or_path: str):
-    epub_root = get_path(book_id_or_path)
-    if epub_root:
+
+    if epub_root := get_path(book_id_or_path):
         opf_path = epub_root / process_container(epub_root / "META-INF/container.xml") 
         console.print(opf_path)
 
 
 @app.command()
 def opf(book_id_or_path: str):
-    epub_root = get_path(book_id_or_path)
-    if epub_root:
+
+    if epub_root := get_path(book_id_or_path):
         opf_path = process_container(epub_root / "META-INF/container.xml")
         opf_data = process_opf(epub_root, opf_path)
         console.print("OPF Version:      ", opf_data["version"])
@@ -113,8 +113,8 @@ def opf(book_id_or_path: str):
 
 @app.command()
 def spine(book_id_or_path: str):
-    path = get_path(book_id_or_path)
-    if path:
+
+    if path := get_path(book_id_or_path):
         volume_data = process_volume(path)
         manifest = volume_data["manifest"]
 
@@ -133,6 +133,7 @@ def spine(book_id_or_path: str):
 
 
 def build_nav_tree(node, nav_point) -> None:
+
     styled_label = ""
     if nav_point.get("playOrder"):
         styled_label += f"[dim][{nav_point['playOrder']}][/dim] "
@@ -148,8 +149,8 @@ def build_nav_tree(node, nav_point) -> None:
 
 @app.command()
 def ncx(book_id_or_path: str):
-    path = get_path(book_id_or_path)
-    if path:
+    
+    if path := get_path(book_id_or_path):
         volume_data = process_volume(path)
         console.print(volume_data["ncx"]["title"])
         console.print(volume_data["ncx"]["head"])
@@ -168,8 +169,8 @@ def extract_map(
     address: Annotated[Optional[str], Argument()] = None,
     recurse: bool = False
 ) -> None:
-    path = get_path(book_id_or_path)
-    if path:
+
+    if path := get_path(book_id_or_path):
         volume_data = process_volume(path)
         manifest = volume_data["manifest"]
 
@@ -180,19 +181,20 @@ def extract_map(
                 items.append([item_ref, extract_node(file_path, address=None, recurse=recurse, dictionary=not recurse)])
             console.print(dumps(items, indent=2))
         else:
-            if itemref not in manifest:
+            if item := manifest.get(itemref):
+                file_path = item["path"]
+                if node := extract_node(file_path, address, recurse=recurse, dictionary=not recurse):
+                    console.print(node)
+                else:
+                    print_error(f"Address '{address}' not found in item reference '{itemref}'.")
+            else:
                 print_error(f"Item reference '{itemref}' not found in the manifest.")
                 return
 
-            file_path = manifest[itemref]["path"]
-            node = extract_node(file_path, address, recurse=recurse, dictionary=not recurse)
-            if node:
-                console.print(node)
-            else:
-                print_error(f"Address '{address}' not found in item reference '{itemref}'.")
 
 
 def build_tree(node, data, depth: Optional[int] = None):
+
     address, label, offset, total_length, text, children, tail = data
 
     if "#" in label:
@@ -227,16 +229,15 @@ def build_tree(node, data, depth: Optional[int] = None):
 
 def get_file_path(book_id_or_path: str, itemref: str) -> Path | None:
 
-    path = get_path(book_id_or_path)
-    if path:
+    if path := get_path(book_id_or_path):
         volume_data = process_volume(path)
         manifest = volume_data["manifest"]
 
-        if itemref not in manifest:
+        if item := manifest.get(itemref):
+            return item["path"]
+        else:
             print_error(f"Item reference '{itemref}' not found in the manifest.")
             return None
-
-        return manifest[itemref]["path"]
     else:
         return None
 
@@ -249,14 +250,10 @@ def tree(
     depth: Optional[int] = None
 ) -> None:
 
-    file_path = get_file_path(book_id_or_path, itemref)
-
-    if file_path:
-        tree = Tree(itemref, style="bold")
-        node = extract_node(file_path, address, recurse=True, dictionary=False)
-        if node:
+    if file_path := get_file_path(book_id_or_path, itemref):
+        tree = Tree(itemref)
+        if node := extract_node(file_path, address, recurse=True, dictionary=False):
             build_tree(tree, node, depth)
-
             console.print(tree)
         else:
             print_error(f"Address '{address}' not found in item reference '{itemref}'.")
@@ -269,15 +266,11 @@ def text(
     address: Annotated[Optional[str], Argument()] = None,
 ) -> None:
 
-    file_path = get_file_path(book_id_or_path, itemref)
-
-    if file_path:
-        text = extract_text(file_path, address)
-        if text:
+    if file_path := get_file_path(book_id_or_path, itemref):
+        if text := extract_text(file_path, address):
             console.print(text)
         else:
             print_error(f"Address '{address}' not found in item reference '{itemref}'.")
-
 
 
 @app.command()
@@ -286,11 +279,9 @@ def xml(
     itemref: str,
     address: Annotated[Optional[str], Argument()] = None,
 ) -> None:
-    file_path = get_file_path(book_id_or_path, itemref)
 
-    if file_path:
-        xml = extract_xml(file_path, address)
-        if xml:
+    if file_path := get_file_path(book_id_or_path, itemref):
+        if xml := extract_xml(file_path, address):
             console.print(xml)
         else:
             print_error(f"Address '{address}' not found in item reference '{itemref}'.")

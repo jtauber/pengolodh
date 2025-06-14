@@ -5,7 +5,6 @@ from typing import Optional
 from typing_extensions import Annotated
 import zipfile
 
-from rich import print as rich_print  # type: ignore[import-not-found]
 from rich.console import Console  # type: ignore[import-not-found]
 from rich.table import Table  # type: ignore[import-not-found]
 from rich.tree import Tree  # type: ignore[import-not-found]
@@ -18,14 +17,16 @@ from .extract import extract_node, extract_text, extract_xml
 
 
 app = Typer()
+console = Console()
+stderr_console = Console(stderr=True)
 
 
 def print_info(message: str) -> None:
-    rich_print(f"[blue]{message}[/blue]", file=sys.stderr)
+    stderr_console.print(f"[blue]{message}[/blue]")
 
 
 def print_error(message: str) -> None:
-    rich_print(f"[red]{message}[/red]", file=sys.stderr)
+    stderr_console.print(f"[red]{message}[/red]")
 
 
 def get_path(book_id_or_path: str) -> Path | zipfile.Path | None:
@@ -64,7 +65,6 @@ def list_books() -> None:
         for book_id, path in books.items():
             table.add_row(book_id, str(Path(path).resolve()))
 
-        console = Console()
         console.print(table)
 
 
@@ -73,8 +73,8 @@ def title(book_id_or_path: str):
     path = get_path(book_id_or_path)
     if path:
         volume_data = process_volume(path)
-        print("Metadata:", volume_data["metadata"]["title"])
-        print("NCX:", volume_data["ncx"]["title"])
+        console.print("Metadata:", volume_data["metadata"]["title"])
+        console.print("NCX:", volume_data["ncx"]["title"])
 
 
 @app.command()
@@ -82,7 +82,7 @@ def container(book_id_or_path: str):
     epub_root = get_path(book_id_or_path)
     if epub_root:
         opf_path = epub_root / process_container(epub_root / "META-INF/container.xml") 
-        print(opf_path)
+        console.print(opf_path)
 
 
 @app.command()
@@ -91,13 +91,13 @@ def opf(book_id_or_path: str):
     if epub_root:
         opf_path = process_container(epub_root / "META-INF/container.xml")
         opf_data = process_opf(epub_root, opf_path)
-        rich_print("OPF Version:      ", opf_data["version"])
-        rich_print("Unique Identifier:", opf_data["unique_identifier"])
-        rich_print("Prefix:           ", opf_data["prefix"])
-        rich_print("XML Language:     ", opf_data["xml_lang"])
-        print()
-        print(opf_data["metadata"])
-        print()
+        console.print("OPF Version:      ", opf_data["version"])
+        console.print("Unique Identifier:", opf_data["unique_identifier"])
+        console.print("Prefix:           ", opf_data["prefix"])
+        console.print("XML Language:     ", opf_data["xml_lang"])
+        console.print()
+        console.print(opf_data["metadata"])
+        console.print()
 
         table = Table(title="Manifest")
         table.add_column("id", style="cyan")
@@ -108,7 +108,6 @@ def opf(book_id_or_path: str):
         for item_id, item_data in opf_data["manifest"].items():
             table.add_row(item_id, item_data["href"], item_data.get("media-type", ""), item_data.get("properties", ""))
 
-        console = Console()
         console.print(table)
 
 
@@ -118,8 +117,6 @@ def spine(book_id_or_path: str):
     if path:
         volume_data = process_volume(path)
         manifest = volume_data["manifest"]
-
-        console = Console()
 
         table = Table(title="Spine")
         table.add_column("Item Ref", style="cyan")
@@ -154,14 +151,13 @@ def ncx(book_id_or_path: str):
     path = get_path(book_id_or_path)
     if path:
         volume_data = process_volume(path)
-        print(volume_data["ncx"]["title"])
-        print(volume_data["ncx"]["head"])
+        console.print(volume_data["ncx"]["title"])
+        console.print(volume_data["ncx"]["head"])
 
         tree = Tree("[bold]NCX[/bold]")
         for nav_point in volume_data["ncx"]["navMap"]:
             build_nav_tree(tree, nav_point)
 
-        console = Console()
         console.print(tree)
 
 
@@ -182,7 +178,7 @@ def extract_map(
             for item_ref in volume_data["spine"]["itemrefs"]:
                 file_path = manifest[item_ref]["path"]
                 items.append([item_ref, extract_node(file_path, address=None, recurse=recurse, dictionary=not recurse)])
-            print(dumps(items, indent=2))
+            console.print(dumps(items, indent=2))
         else:
             if itemref not in manifest:
                 print_error(f"Item reference '{itemref}' not found in the manifest.")
@@ -191,7 +187,7 @@ def extract_map(
             file_path = manifest[itemref]["path"]
             node = extract_node(file_path, address, recurse=recurse, dictionary=not recurse)
             if node:
-                print(node)
+                console.print(node)
             else:
                 print_error(f"Address '{address}' not found in item reference '{itemref}'.")
 
@@ -261,7 +257,6 @@ def tree(
         if node:
             build_tree(tree, node, depth)
 
-            console = Console()
             console.print(tree)
         else:
             print_error(f"Address '{address}' not found in item reference '{itemref}'.")
@@ -279,7 +274,6 @@ def text(
     if file_path:
         text = extract_text(file_path, address)
         if text:
-            console = Console()
             console.print(text)
         else:
             print_error(f"Address '{address}' not found in item reference '{itemref}'.")
@@ -297,7 +291,6 @@ def xml(
     if file_path:
         xml = extract_xml(file_path, address)
         if xml:
-            console = Console()
             console.print(xml)
         else:
             print_error(f"Address '{address}' not found in item reference '{itemref}'.")

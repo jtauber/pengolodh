@@ -12,7 +12,7 @@ from rich.tree import Tree  # type: ignore[import-not-found]
 import typer  # type: ignore
 
 from .config import books_configuration
-from .epub import process_volume
+from .epub import process_volume, process_container, process_opf
 from .extract import extract_node, extract_text, extract_xml
 
 
@@ -70,7 +70,41 @@ def list_books() -> None:
 def volume(book_id_or_path: str):
     path = get_path(book_id_or_path)
     volume_data = process_volume(path)
+    print(volume_data["metadata"]["title"])
     print(volume_data["ncx"]["title"])
+
+
+@app.command()
+def container(book_id_or_path: str):
+    epub_root = get_path(book_id_or_path)
+    opf_path = epub_root / process_container(epub_root / "META-INF/container.xml") 
+    print(opf_path)
+
+
+@app.command()
+def opf(book_id_or_path: str):
+    epub_root = get_path(book_id_or_path)
+    opf_path = process_container(epub_root / "META-INF/container.xml")
+    opf_data = process_opf(epub_root, opf_path)
+    rich_print("OPF Version:      ", opf_data["version"])
+    rich_print("Unique Identifier:", opf_data["unique_identifier"])
+    rich_print("Prefix:           ", opf_data["prefix"])
+    rich_print("XML Language:     ", opf_data["xml_lang"])
+    print()
+    print(opf_data["metadata"])
+    print()
+
+    table = Table(title="Manifest")
+    table.add_column("id", style="cyan")
+    table.add_column("href", style="magenta")
+    table.add_column("media-type", style="green")
+    table.add_column("properties", style="yellow")
+
+    for item_id, item_data in opf_data["manifest"].items():
+        table.add_row(item_id, item_data["href"], item_data.get("media-type", ""), item_data.get("properties", ""))
+
+    console = Console()
+    console.print(table)
 
 
 @app.command()
@@ -79,15 +113,49 @@ def spine(book_id_or_path: str):
     volume_data = process_volume(path)
     manifest = volume_data["manifest"]
 
+    console = Console()
+
     table = Table(title="Spine")
     table.add_column("Item Ref", style="cyan")
     table.add_column("Path", style="magenta")
 
     for itemref in volume_data["spine"]["itemrefs"]:
-        table.add_row(itemref, str(manifest[itemref]["path"]))
+        table.add_row(itemref, str(manifest[itemref]["href"]))
+
+    console.print(table)
+    console.print(
+        f"[bold]TOC ID[/bold]:",
+        f"[cyan]{volume_data['spine']['toc_id']}[/cyan]", 
+        f"[magenta]{manifest[volume_data['spine']['toc_id']]['href']}[/magenta]",)
+
+
+def build_nav_tree(node, nav_point) -> None:
+    styled_label = ""
+    if nav_point.get("playOrder"):
+        styled_label += f"[dim][{nav_point['playOrder']}][/dim] "
+    styled_label += f"[cyan]{nav_point['id']}[/cyan] "
+    styled_label += f"[bold]{nav_point['label']}[/bold] "
+    styled_label += f"[magenta]{nav_point['src']}[/magenta] "
+
+    child_node = node.add(styled_label)
+
+    for child in nav_point["children"]:
+        build_nav_tree(child_node, child)
+
+
+@app.command()
+def ncx(book_id_or_path: str):
+    path = get_path(book_id_or_path)
+    volume_data = process_volume(path)
+    print(volume_data["ncx"]["title"])
+    print(volume_data["ncx"]["head"])
+
+    tree = Tree("[bold]NCX[/bold]")
+    for nav_point in volume_data["ncx"]["navMap"]:
+        build_nav_tree(tree, nav_point)
 
     console = Console()
-    console.print(table)
+    console.print(tree)
 
 
 @app.command()

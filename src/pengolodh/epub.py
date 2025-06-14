@@ -4,6 +4,10 @@ from pathlib import Path
 from lxml import etree  # type: ignore[import-untyped]
 
 
+def opendoc_container(element_name: str) -> str:
+    return "{urn:oasis:names:tc:opendocument:xmlns:container}" + element_name
+
+
 def opf(element_name: str) -> str:
     return "{http://www.idpf.org/2007/opf}" + element_name
 
@@ -40,15 +44,15 @@ def process_volume(path: Path | zipfile.Path) -> dict:
 def process_container(path: Path | zipfile.Path) -> str:
     assert path.is_file()
     container = etree.fromstring(path.read_bytes())
-    assert container.tag == "{urn:oasis:names:tc:opendocument:xmlns:container}container"
+    assert container.tag == opendoc_container("container")
     assert container.attrib == {"version": "1.0"}
     assert len(container) == 1
     rootfiles = container[0]
-    assert rootfiles.tag == "{urn:oasis:names:tc:opendocument:xmlns:container}rootfiles"
+    assert rootfiles.tag == opendoc_container("rootfiles")
     assert rootfiles.attrib == {}
     assert len(rootfiles) == 1
     rootfile = rootfiles[0]
-    assert rootfile.tag == "{urn:oasis:names:tc:opendocument:xmlns:container}rootfile"
+    assert rootfile.tag == opendoc_container("rootfile")
     assert set(rootfile.keys()) == {"full-path", "media-type"}
     assert rootfile.attrib["full-path"]
     assert rootfile.attrib["media-type"] == "application/oebps-package+xml"
@@ -57,8 +61,8 @@ def process_container(path: Path | zipfile.Path) -> str:
     return str(rootfile.attrib["full-path"])
 
 
-def process_opf(parent: Path | zipfile.Path, rootfile: str) -> dict:
-    path = parent / rootfile
+def process_opf(epub_root: Path | zipfile.Path, rootfile: str) -> dict:
+    path = epub_root / rootfile
     assert path.is_file()
     package = etree.fromstring(path.read_bytes())
     assert package.tag == opf("package")
@@ -89,6 +93,10 @@ def process_opf(parent: Path | zipfile.Path, rootfile: str) -> dict:
     ncx_path = path.parent / manifest[spine["toc_id"]]["href"]
 
     return {
+        "version": version,
+        "unique_identifier": unique_identifier,
+        "prefix": package.attrib.get("prefix", ""),
+        "xml_lang": package.attrib.get(xml("lang"), ""),
         "metadata": metadata,
         "manifest": manifest,
         "spine": spine,
@@ -220,6 +228,7 @@ def process_manifest(parent_path: Path | zipfile.Path, manifest_element: etree._
             "href": child.attrib["href"],
             "path": parent_path / str(child.attrib["href"]),
             "media-type": child.attrib["media-type"],
+            "properties": child.attrib.get("properties"),
         }
 
     return manifest
@@ -275,6 +284,7 @@ def process_ncx(path: Path) -> dict:
     assert ncx_root.attrib["version"] == "2005-1"
 
     navMap = []
+    head = {}
 
     for child in ncx_root:
         if child.tag == ncx("head"):
@@ -292,6 +302,7 @@ def process_ncx(path: Path) -> dict:
                 ], head_child.attrib["name"]
                 if head_child.attrib["name"] == "dtb:uid":
                     uid = head_child.attrib["content"]
+                head[head_child.attrib["name"]] = head_child.attrib["content"]
         elif child.tag == ncx("docTitle"):
             assert child.attrib == {}
             assert len(child) == 1
@@ -320,6 +331,7 @@ def process_ncx(path: Path) -> dict:
 
     return {
         "uid": uid,
+        "head": head,
         "title": docTitle,
         "path": path.parent,
         "navMap": navMap,
@@ -334,6 +346,10 @@ def process_nav_point(root_path: Path, navPoint: etree._Element, level: int = 0)
     assert len(navPoint) > 0
 
     playOrder = navPoint.attrib.get("playOrder")
+    klass = navPoint.attrib.get("class")
+    nav0 = navPoint.attrib.get("nav0")
+    pointId = navPoint.attrib.get("id")
+
     children = []
 
     for navPoint_child in navPoint:
@@ -356,7 +372,10 @@ def process_nav_point(root_path: Path, navPoint: etree._Element, level: int = 0)
             raise ValueError(navPoint_child.tag)
 
     return {
+        "id": pointId,
         "playOrder": playOrder,
+        "class": klass,
+        "nav0": nav0,
         "level": level,
         "label": label,
         "src": src,

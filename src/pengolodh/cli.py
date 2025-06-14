@@ -218,13 +218,8 @@ def build_tree(node, data, depth: Optional[int] = None):
         node.add(f"[yellow]{repr(tail)}[/yellow]")
 
 
-@app.command()
-def tree(
-    book_id_or_path: str,
-    itemref: str,
-    address: Annotated[Optional[str], Argument()] = None,
-    depth: Optional[int] = None
-) -> None:
+def get_file_path(book_id_or_path: str, itemref: str) -> Path | None:
+
     path = get_path(book_id_or_path)
     volume_data = process_volume(path)
     manifest = volume_data["manifest"]
@@ -233,13 +228,26 @@ def tree(
         print_error(f"Item reference '{itemref}' not found in the manifest.")
         return
 
-    file_path = manifest[itemref]["path"]
-    tree = Tree(itemref, style="bold")
-    node = extract_node(file_path, address, recurse=True, dictionary=False)
-    build_tree(tree, node, depth)
+    return manifest[itemref]["path"]
 
-    console = Console()
-    console.print(tree)
+
+@app.command()
+def tree(
+    book_id_or_path: str,
+    itemref: str,
+    address: Annotated[Optional[str], Argument()] = None,
+    depth: Optional[int] = None
+) -> None:
+
+    file_path = get_file_path(book_id_or_path, itemref)
+
+    if file_path:
+        tree = Tree(itemref, style="bold")
+        node = extract_node(file_path, address, recurse=True, dictionary=False)
+        build_tree(tree, node, depth)
+
+        console = Console()
+        console.print(tree)
 
 
 @app.command()
@@ -248,17 +256,11 @@ def text(
     itemref: str,
     address: Annotated[Optional[str], Argument()] = None,
 ) -> None:
-    path = get_path(book_id_or_path)
-    volume_data = process_volume(path)
-    manifest = volume_data["manifest"]
 
-    if itemref not in manifest:
-        print_error(f"Item reference '{itemref}' not found in the manifest.")
-        return
+    file_path = get_file_path(book_id_or_path, itemref)
 
-    file_path = manifest[itemref]["path"]
-
-    print(extract_text(file_path, address))
+    if file_path:
+        print(extract_text(file_path, address))
 
 
 @app.command()
@@ -267,15 +269,8 @@ def xml(
     itemref: str,
     address: Annotated[Optional[str], Argument()] = None,
 ) -> None:
-    path = get_path(book_id_or_path)
-    volume_data = process_volume(path)
-    manifest = volume_data["manifest"]
+    file_path = get_file_path(book_id_or_path, itemref)
 
-    if itemref not in manifest:
-        print_error(f"Item reference '{itemref}' not found in the manifest.")
-        return
-
-    file_path = manifest[itemref]["path"]
-
-    console = Console()
-    console.print(extract_xml(file_path, address))
+    if file_path:
+        console = Console()
+        console.print(extract_xml(file_path, address))

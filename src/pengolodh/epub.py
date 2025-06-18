@@ -100,6 +100,7 @@ def process_opf(epub_root: Path | zipfile.Path, rootfile: str) -> dict:
         "metadata": metadata,
         "manifest": manifest,
         "spine": spine,
+        "ncx_path": ncx_path,
         "ncx": process_ncx(ncx_path),
     }
 

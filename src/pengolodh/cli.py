@@ -1,6 +1,6 @@
 from json import dumps
 from pathlib import Path
-import sys
+import re
 from typing import Optional
 from typing_extensions import Annotated
 import zipfile
@@ -193,7 +193,7 @@ def extract_map(
 
 
 
-def build_tree(node, data, depth: Optional[int] = None):
+def build_tree(node, data, depth: Optional[int] = None, trim: bool = False) -> None:
 
     address, label, offset, total_length, text, children, tail = data
 
@@ -216,12 +216,18 @@ def build_tree(node, data, depth: Optional[int] = None):
 
     child_node = node.add(styled_label, style="not bold")
 
+    if trim and text:
+        text = re.sub(r"\s+", " ", text).strip()
+
     if text:
         child_node.add(f"[yellow]{repr(text)}[/yellow]")
 
     if depth is None or depth > 0:
         for child in children:
-            build_tree(child_node, child, None if depth is None else depth - 1)
+            build_tree(child_node, child, None if depth is None else depth - 1, trim)
+
+    if trim and tail:
+        tail = re.sub(r"\s+", " ", tail).strip()
 
     if tail:
         node.add(f"[yellow]{repr(tail)}[/yellow]")
@@ -247,13 +253,14 @@ def tree(
     book_id_or_path: str,
     itemref: str,
     address: Annotated[Optional[str], Argument()] = None,
-    depth: Optional[int] = None
+    depth: Optional[int] = None,
+    trim: bool = False,
 ) -> None:
 
     if file_path := get_file_path(book_id_or_path, itemref):
         tree = Tree(itemref)
         if node := extract_node(file_path, address, recurse=True, dictionary=False):
-            build_tree(tree, node, depth)
+            build_tree(tree, node, depth, trim)
             console.print(tree)
         else:
             print_error(f"Address '{address}' not found in item reference '{itemref}'.")

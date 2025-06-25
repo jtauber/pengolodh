@@ -70,11 +70,12 @@ def process_opf(epub_root: Path | zipfile.Path, rootfile: str) -> dict:
         {"version", "unique-identifier"},
         {"version", "unique-identifier", "prefix"},
         {"version", "unique-identifier", xml("lang")},
+        {"version", "unique-identifier", "prefix", xml("lang")},
     ], package.attrib
     version = package.attrib["version"]
     assert version in ["2.0", "3.0"]
     unique_identifier = package.attrib["unique-identifier"]
-    assert unique_identifier in ["PrimaryID", "bookid", "uuid_id"], unique_identifier
+    # assert unique_identifier in ["PrimaryID", "bookid", "uuid_id"], unique_identifier
     assert len(package) == 4
 
     for child in package:
@@ -114,7 +115,10 @@ def process_metadata(metadata_element: etree._Element) -> dict:
 
     for child in metadata_element:
         if child.tag == dc("title"):
-            assert child.attrib == {}
+            assert set(child.keys()) in [
+                set(),
+                {"id", xml("lang")},
+            ], child.attrib
             assert len(child) == 0
             metadata["title"] = child.text
         elif child.tag == dc("creator"):
@@ -172,7 +176,10 @@ def process_metadata(metadata_element: etree._Element) -> dict:
             assert len(child) == 0
             # print(child.text)  # @@@
         elif child.tag == dc("source"):
-            assert child.attrib == {}
+            assert set(child.keys()) in [
+                set(),
+                {"id"},
+            ], child.attrib
             assert len(child) == 0
             # print(child.text)  # @@@
         elif child.tag == opf("meta"):
@@ -180,6 +187,15 @@ def process_metadata(metadata_element: etree._Element) -> dict:
                 assert child.attrib["property"] in [
                     "dcterms:modified",
                     "role",
+                    "title-type",
+                    "file-as",
+                    "source-of",
+                    "schema:accessMode",
+                    "schema:accessModeSufficient",
+                    "schema:accessibilityFeature",
+                    "schema:accessibilityHazard",
+                    "schema:accessibilitySummary",
+                    "a11y:certifiedBy",
                 ], child.attrib["property"]
                 assert len(child) == 0
                 #  print(child.text)  # @@@
@@ -187,6 +203,8 @@ def process_metadata(metadata_element: etree._Element) -> dict:
                 assert set(child.keys()) == {"name", "content"}
                 assert len(child) == 0
                 assert child.text is None
+        elif child.tag == opf("link"):
+            pass  # @@@
         else:
             raise ValueError(child.tag)
 

@@ -1,3 +1,4 @@
+from collections import Counter
 from json import dumps
 from pathlib import Path
 import re
@@ -262,6 +263,36 @@ def tree(
         if node := extract_node(file_path, address, recurse=True, dictionary=False):
             build_tree(tree, node, depth, trim)
             console.print(tree)
+        else:
+            print_error(f"Address '{address}' not found in item reference '{itemref}'.")
+
+
+def get_tags(data):
+    _, label, _, _, _, children, _ = data
+
+    if "#" in label:
+        label = label.split("#")[0]
+
+    yield label
+
+    for child in children:
+        yield from get_tags(child)
+
+
+@app.command()
+def tags(
+    book_id_or_path: str,
+    itemref: str,
+    address: Annotated[Optional[str], Argument()] = None,
+) -> None:
+
+    if file_path := get_file_path(book_id_or_path, itemref):
+        if node := extract_node(file_path, address, recurse=True, dictionary=False):
+            tags = Counter()
+            for tag in get_tags(node):
+                tags[tag] += 1
+            for tag, count in tags.most_common():
+                console.print(f"[green]{count:>5}[/green] [bold]{tag}[/bold]")
         else:
             print_error(f"Address '{address}' not found in item reference '{itemref}'.")
 

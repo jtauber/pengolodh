@@ -1,4 +1,6 @@
 import typer
+import zipfile
+import os
 import requests
 from lxml import html
 
@@ -78,6 +80,28 @@ def download_book(url: str, filename: str) -> bool:
     except Exception as e:
         print(f"Download failed: {e}.")
         return False
+    
+def extract_epub(epub_filename: str):
+    """Extract an EPUB file to a folder with the same name"""
+    try:
+        # Create the folder name (remove .epub extension)
+        folder_name = epub_filename.replace('.epub', '')
+        
+        # Create the directory if it doesn't exist
+        os.makedirs(folder_name, exist_ok=True)
+        
+        print(f"Extracting {epub_filename} to {folder_name}/")
+        
+        # Extract the EPUB (which is a ZIP file)
+        with zipfile.ZipFile(epub_filename, 'r') as zip_ref:
+            zip_ref.extractall(folder_name)
+        
+        print(f"Successfully extracted to {folder_name}/")
+        return True
+        
+    except Exception as e:
+        print(f"Extraction failed: {e}")
+        return False
 
 def main(query: str = typer.Argument(..., help="Search Project Gutenberg terms such as 'shakespeare', 'old english', 'jane austen', or 'beowulf'. Use quotes for multi-word arguments.")):
     """Search Project Gutenberg and show first 10 results"""
@@ -99,7 +123,7 @@ def main(query: str = typer.Argument(..., help="Search Project Gutenberg terms s
                 pass
 
         selection = True
-        while selection == True:
+        while selection:
             choice = input(f"\nEnter a number (1-{len(book_info)}) to see details, or press Enter to skip: ")
             
             if choice.strip():
@@ -109,12 +133,12 @@ def main(query: str = typer.Argument(..., help="Search Project Gutenberg terms s
                         selected_title, selected_id = book_info[book_index]
                         print(f"\nYou selected: {selected_title}")
                         print(f"Book ID: {selected_id}")
-                        print(f"Getting details...")
+                        print("Getting details...")
                         details = get_book_details(selected_id)
                         print(f"Author: {details['author']}")
                         print(f"Language: {details['language']}")
                         print(f"Release Date: {details['release_date']}")
-                        print(f"\nAvailable formats:")
+                        print("\nAvailable formats:")
                         format_list = list(details['formats'].items())
                         for i, (format_name, url) in enumerate(format_list, 1):
                             print(f"  {i}. {format_name}")
@@ -145,6 +169,12 @@ def main(query: str = typer.Argument(..., help="Search Project Gutenberg terms s
                                         
                                         filename = f"{safe_title}{extension}"
                                         download_book(url, filename)
+                                        download_success = download_book(url, filename)
+                                        # If it's an EPUB and download was successful, extract it
+                                        if download_success and extension == '.epub':
+                                            extract_choice = input("Extract EPUB contents? (y/n): ")
+                                            if extract_choice.lower() in ['y', 'yes']:
+                                                extract_epub(filename)
                                     else: 
                                         print("Invalid selection!")
                                 except ValueError:
